@@ -1,0 +1,193 @@
+<!-- src/app/components/student-registration/student-registration.component.html -->
+
+<div class="registration-container">
+  <div class="registration-card">
+    <h2>Student Registration</h2>
+
+    <!-- Success Message -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      {{ successMessage }}
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+      <!-- First Name -->
+      <div class="form-group">
+        <label for="firstName"
+          >First Name <span class="required">*</span></label
+        >
+        <input
+          type="text"
+          id="firstName"
+          formControlName="firstName"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('firstName')"
+          placeholder="Enter first name"
+        />
+        <div *ngIf="isFieldInvalid('firstName')" class="error-message">
+          First name is required (minimum 2 characters)
+        </div>
+      </div>
+
+      <!-- Last Name -->
+      <div class="form-group">
+        <label for="lastName">Last Name <span class="required">*</span></label>
+        <input
+          type="text"
+          id="lastName"
+          formControlName="lastName"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('lastName')"
+          placeholder="Enter last name"
+        />
+        <div *ngIf="isFieldInvalid('lastName')" class="error-message">
+          Last name is required (minimum 2 characters)
+        </div>
+      </div>
+
+      <!-- Birth Date -->
+      <div class="form-group">
+        <label for="birthDate"
+          >Birth Date <span class="required">*</span></label
+        >
+        <input
+          type="date"
+          id="birthDate"
+          formControlName="birthDate"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('birthDate')"
+        />
+        <div *ngIf="isFieldInvalid('birthDate')" class="error-message">
+          Birth date is required
+        </div>
+      </div>
+
+      <!-- Field of Study -->
+      <div class="form-group">
+        <label for="field"
+          >Field of Study <span class="required">*</span></label
+        >
+        <select
+          id="field"
+          formControlName="field"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('field')"
+        >
+          <option value="">Select a field</option>
+          <option *ngFor="let field of fieldsOfStudies" [value]="field">
+            {{ field.replace("_", " ") }}
+          </option>
+        </select>
+        <div *ngIf="isFieldInvalid('field')" class="error-message">
+          Field of study is required
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label for="username">Username <span class="required">*</span></label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('username')"
+          placeholder="Enter username"
+        />
+        <div *ngIf="isFieldInvalid('username')" class="error-message">
+          Username is required (minimum 4 characters)
+        </div>
+      </div>
+
+      <!-- Password -->
+      <!-- <div class="form-group">
+        <label for="password">Password <span class="required">*</span></label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('password')"
+          placeholder="Enter password">
+        <div *ngIf="isFieldInvalid('password')" class="error-message">
+          Password is required (minimum 6 characters)
+        </div>
+      </div> -->
+
+      <div class="form-group">
+        <label>Has Equivalence <span class="required">*</span></label>
+
+        <div class="radio-group">
+          <label class="radio-option">
+            <input
+              type="radio"
+              formControlName="hasEquivalence"
+              [value]="true"
+            />
+            Yes
+          </label>
+
+          <label class="radio-option">
+            <input
+              type="radio"
+              formControlName="hasEquivalence"
+              [value]="false"
+            />
+            No
+          </label>
+        </div>
+
+        <div *ngIf="isFieldInvalid('hasEquivalence')" class="error-message">
+          Please select an option
+        </div>
+      </div>
+
+      <!-- Equivalence Semester (appears only if YES) -->
+      <div
+        class="form-group"
+        *ngIf="registrationForm.get('hasEquivalence')?.value === true"
+      >
+        <label for="equivalenceSemester">
+          Equivalence Semester <span class="required">*</span>
+        </label>
+
+        <select
+          id="equivalenceSemster"
+          formControlName="equivalenceSemester"
+          class="form-control"
+          [class.invalid]="isFieldInvalid('equivalenceSemster')"
+        >
+          <option value="">Select semester</option>
+          <option value="4">Semester 4</option>
+          <option value="6">Semester 6</option>
+        </select>
+
+        <div
+          *ngIf="isFieldInvalid('equivalenceSemester')"
+          class="error-message"
+        >
+          Equivalence semester is required
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="button-group">
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+          {{ isSubmitting ? "Submitting..." : "Register" }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onReset()"
+          [disabled]="isSubmitting"
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

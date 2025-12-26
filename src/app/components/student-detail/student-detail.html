@@ -1,0 +1,425 @@
+<!-- src/app/components/student-detail/student-detail.component.html -->
+
+<div class="container">
+  <!-- Back Button -->
+  <div class="back-button">
+    <a routerLink="/students" class="btn-back">← Back to List</a>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    ✓ {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-error">✗ {{ errorMessage }}</div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading student details...</p>
+  </div>
+
+  <!-- Student Details -->
+  <div *ngIf="!isLoading && student" class="content-grid">
+    <!-- Left Column: Student Info -->
+    <div class="left-column">
+      <!-- Student Card -->
+      <div class="detail-card">
+        <div class="card-header">
+          <div class="student-avatar">
+            {{ student.firstName.charAt(0) }}{{ student.lastName.charAt(0) }}
+          </div>
+          <div class="student-info">
+            <h1>{{ student.firstName }} {{ student.lastName }}</h1>
+            <p class="username">@{{ student.username }}</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Student ID</div>
+              <div class="info-value">{{ student.id }}</div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">Birth Date</div>
+              <div class="info-value">{{ formatDate(student.birthDate) }}</div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">Age</div>
+              <div class="info-value">
+                {{ calculateAge(student.birthDate) }} years
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">Field of Study</div>
+              <div class="info-value">
+                <span class="badge">{{
+                  student.field?.replace("_", " ")
+                }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-label">Current Semester</div>
+              <div class="info-value semester">
+                Semester {{ student.currentSemester }}
+              </div>
+            </div>
+
+            <div class="info-item full-width">
+              <div class="info-label">Validated Semesters</div>
+              <div class="info-value">
+                <div class="semester-chips">
+                  <span
+                    *ngFor="let sem of student.validatedSemesters"
+                    class="chip"
+                  >
+                    Semester {{ sem }}
+                  </span>
+                  <span
+                    *ngIf="
+                      !student.validatedSemesters ||
+                      student.validatedSemesters.length === 0
+                    "
+                    class="no-data"
+                  >
+                    No validated semesters yet
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a
+            [routerLink]="['/student/edit', student.id]"
+            class="btn btn-primary"
+          >
+            ✏️ Edit Student
+          </a>
+          <button (click)="confirmDelete()" class="btn btn-danger">
+            🗑️ Delete Student
+          </button>
+        </div>
+      </div>
+
+      <!-- Academic Performance Summary -->
+      <div class="summary-card" *ngIf="grades.length > 0">
+        <h3>📊 Academic Summary</h3>
+        <div class="summary-stats">
+          <div class="stat-item">
+            <div class="stat-label">Total Courses</div>
+            <div class="stat-value">{{ grades.length }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Average Grade</div>
+            <div
+              class="stat-value"
+              [class]="getGradeClass(calculateAverageGrade())"
+            >
+              {{ calculateAverageGrade().toFixed(2) }}/40
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Status</div>
+            <div class="stat-value">
+              <span
+                [class]="
+                  'status-badge ' + getGradeClass(calculateAverageGrade())
+                "
+              >
+                {{ getGradeStatus(calculateAverageGrade()) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Grades Section -->
+    <div class="right-column">
+      <!-- Grades Header -->
+      <div class="grades-header">
+        <h2>📚 Course Grades</h2>
+        <button (click)="toggleGradeForm()" class="btn btn-primary">
+          {{ showGradeForm ? "✕ Close Form" : "+ Add New Grade" }}
+        </button>
+      </div>
+
+      <!-- Add Grade Form -->
+      <div *ngIf="showGradeForm" class="grade-form-card">
+        <h3>{{ editingGradeId ? "Edit Grade" : "Add New Grade" }}</h3>
+        <form [formGroup]="gradeForm" (ngSubmit)="onSubmitGrade()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="courseId"
+                >Course ID <span class="required">*</span></label
+              >
+              <select
+                id="courseId"
+                formControlName="courseId"
+                class="form-control"
+                [class.invalid]="isFieldInvalid('courseId')"
+              >
+                <option value="" disabled selected>
+                  -- Select a course --
+                </option>
+
+                <option
+                  *ngFor="let course of studentCourses"
+                  [value]="course.id"
+                >
+                  {{ course.name }}
+                </option>
+              </select>
+
+              <div *ngIf="isFieldInvalid('courseId')" class="error-message">
+                Course is required
+              </div>
+              <div *ngIf="isFieldInvalid('courseId')" class="error-message">
+                Course ID is required
+              </div>
+            </div>
+
+            <!-- <div class="form-group">
+              <label for="semesterNumber"
+                >Semester <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="semesterNumber"
+                formControlName="semesterNumber"
+                class="form-control"
+                [class.invalid]="isFieldInvalid('semesterNumber')"
+                min="1"
+                max="12"
+                placeholder=""
+              />
+              <div
+                *ngIf="isFieldInvalid('semesterNumber')"
+                class="error-message"
+              >
+                Semester (1-12) is required
+              </div>
+            </div> -->
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="continuousAssessment"
+                >Continuous Assessment (Max: 20)
+                <span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="continuousAssessment"
+                formControlName="continuousAssessment"
+                class="form-control"
+                [class.invalid]="isFieldInvalid('continuousAssessment')"
+                min="0"
+                max="20"
+                step="0.5"
+                placeholder="0-20"
+              />
+              <div
+                *ngIf="isFieldInvalid('continuousAssessment')"
+                class="error-message"
+              >
+                Enter a valid score (0-20)
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="finalExam"
+                >Final Exam (Max: 20) <span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="finalExam"
+                formControlName="finalExam"
+                class="form-control"
+                [class.invalid]="isFieldInvalid('finalExam')"
+                min="0"
+                max="20"
+                step="0.5"
+                placeholder="0-20"
+              />
+              <div *ngIf="isFieldInvalid('finalExam')" class="error-message">
+                Enter a valid score (0-20)
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="academicYear"
+              >Academic Year <span class="required">*</span></label
+            >
+            <input
+              type="number"
+              id="academicYear"
+              formControlName="academicYear"
+              class="form-control"
+              [class.invalid]="isFieldInvalid('academicYear')"
+              placeholder="e.g., 2024"
+            />
+            <div *ngIf="isFieldInvalid('academicYear')" class="error-message">
+              Academic year is required
+            </div>
+          </div>
+
+          <!-- Calculated Final Grade Preview -->
+          <div
+            class="grade-preview"
+            *ngIf="
+              gradeForm.get('continuousAssessment')?.value ||
+              gradeForm.get('finalExam')?.value
+            "
+          >
+            <div class="preview-label">Final Grade Preview:</div>
+            <div
+              class="preview-value"
+              [class]="getGradeClass(calculateFinalGrade())"
+            >
+              {{ calculateFinalGrade() }}/40 -
+              {{ getGradeStatus(calculateFinalGrade()) }}
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="button"
+              (click)="toggleGradeForm()"
+              class="btn btn-secondary"
+              [disabled]="isSubmittingGrade"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="isSubmittingGrade"
+            >
+              {{ isSubmittingGrade ? "Saving..." : "Save Grade" }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Loading Grades -->
+      <div *ngIf="isLoadingGrades" class="loading-grades">
+        <div class="spinner-small"></div>
+        <p>Loading grades...</p>
+      </div>
+
+      <!-- No Grades -->
+      <div *ngIf="!isLoadingGrades && grades.length === 0" class="no-grades">
+        <div class="no-grades-icon">📝</div>
+        <h4>No Grades Yet</h4>
+        <p>Start by adding the first grade for this student</p>
+        <button (click)="toggleGradeForm()" class="btn btn-primary">
+          + Add First Grade
+        </button>
+      </div>
+
+      <!-- Grades List -->
+      <div *ngIf="!isLoadingGrades && grades.length > 0" class="grades-list">
+        <div *ngFor="let grade of grades" class="grade-item">
+          <div class="grade-header-row">
+            <div class="grade-course">
+              <span class="course-label">Course ID:</span>
+              <span class="course-id">{{ grade.courseId }}</span>
+            </div>
+            <button
+              (click)="deleteGrade(grade.id!)"
+              class="btn-delete-small"
+              title="Delete Grade"
+            >
+              🗑️
+            </button>
+          </div>
+
+          <div class="grade-details-grid">
+            <div class="grade-detail">
+              <span class="detail-icon">📅</span>
+              <div>
+                <div class="detail-small-label">Academic Year</div>
+                <div class="detail-small-value">{{ grade.academicYear }}</div>
+              </div>
+            </div>
+
+            <div class="grade-detail">
+              <span class="detail-icon">📖</span>
+              <div>
+                <div class="detail-small-label">Semester</div>
+                <div class="detail-small-value">
+                  Semester {{ grade.semesterNumber }}
+                </div>
+              </div>
+            </div>
+
+            <div class="grade-detail">
+              <span class="detail-icon">📊</span>
+              <div>
+                <div class="detail-small-label">Continuous Assessment</div>
+                <div class="detail-small-value">
+                  {{ grade.continuousAssessment }}/20
+                </div>
+              </div>
+            </div>
+
+            <div class="grade-detail">
+              <span class="detail-icon">📝</span>
+              <div>
+                <div class="detail-small-label">Final Exam</div>
+                <div class="detail-small-value">{{ grade.finalExam }}/20</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grade-final">
+            <div class="final-label">Final Grade</div>
+            <div class="final-score" [class]="getGradeClass(grade.finalGrade)">
+              {{ grade.finalGrade }}/40
+            </div>
+            <span
+              class="grade-status"
+              [class]="getGradeClass(grade.finalGrade)"
+            >
+              {{ getGradeStatus(grade.finalGrade) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Student Confirmation Modal -->
+  <div *ngIf="showDeleteModal" class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-icon">⚠️</div>
+      <h3>Confirm Delete</h3>
+      <p>
+        Are you sure you want to delete
+        <strong>{{ student?.firstName }} {{ student?.lastName }}</strong
+        >?
+      </p>
+      <p class="warning">
+        This will also delete all associated grades and cannot be undone.
+      </p>
+      <div class="modal-actions">
+        <button (click)="cancelDelete()" class="btn btn-secondary">
+          Cancel
+        </button>
+        <button (click)="deleteStudent()" class="btn btn-danger">
+          Delete Student
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
